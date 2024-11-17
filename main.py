@@ -198,6 +198,6 @@ if __name__ == "__main__":
 
     learning_agent.epsilon = 0 # При игре против человека агент не будет случайно выбирать ход
 
-    test_agent(env, learning_agent, number=50_000)
+    test_agent(env, learning_agent, number=50000)
 
     play_with_human(env, learning_agent)

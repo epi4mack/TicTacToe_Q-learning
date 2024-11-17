@@ -23,24 +23,19 @@ class TicTacToeEnv:
             raise ValueError('Клетка занята!')
 
         self.board[i, j] = self.current_player
-
         winner = self.check_winner()
-
         self.current_player *= -1
+
         return self.get_state(), winner
 
     def check_winner(self):
-
         for i in range(3):
             if abs(sum(self.board[i, :])) == 3 or abs(sum(self.board[:, i])) == 3:
                 return self.current_player
-
         if abs(self.board.trace()) == 3 or abs(np.fliplr(self.board).trace()) == 3:
             return self.current_player
-
         if not self.available_actions:
             return 0
-
         return None
 
     def make_human_move(self):
@@ -64,4 +59,3 @@ class TicTacToeEnv:
             for i, col in enumerate(row):
                 print(f'{d[col]}', end='|')
             print()
-

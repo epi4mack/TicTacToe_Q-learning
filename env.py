@@ -8,7 +8,7 @@ class TicTacToeEnv:
 
     def reset(self):
         self.board = np.zeros((3, 3), dtype=int)
-        self.current_player = 1#-1
+        self.current_player = 1
         self.available_actions = [(i, j) for i in range(3) for j in range(3)]
         return self.get_state()
 
@@ -17,29 +17,51 @@ class TicTacToeEnv:
         return tuple(int(x) for x in self.board.flatten())
 
     def step(self, action):
-        # Делает шаг игрока в выбранную клетку
         i, j = action
+
+        if self.board[i][j]:
+            raise ValueError('Клетка занята!')
+
         self.board[i, j] = self.current_player
 
-        reward = self.check_winner()  # Вознаграждение: 1 - победа текущего игрока, 0 - ничья или продолжаем
+        winner = self.check_winner()
 
-        done = reward in (0, 1) or not self.available_actions
-
-        self.current_player *= -1  # Переключаем игрока
-
-        return self.get_state(), reward, done
+        self.current_player *= -1
+        return self.get_state(), winner
 
     def check_winner(self):
+
         for i in range(3):
             if abs(sum(self.board[i, :])) == 3 or abs(sum(self.board[:, i])) == 3:
-                return 1 if self.current_player == 1 else 0
-            
-        if abs(self.board.trace()) == 3 or abs(np.fliplr(self.board).trace()) == 3:
-            return 1 if self.current_player == 1 else 0
-        
-        if not self.available_actions:  # Ничья
-            return 0.5
-        
-        return 0.5  # Игра продолжается
+                return self.current_player
 
+        if abs(self.board.trace()) == 3 or abs(np.fliplr(self.board).trace()) == 3:
+            return self.current_player
+
+        if not self.available_actions:
+            return 0
+
+        return None
+
+    def make_human_move(self):
+        action = input('\nХод: ').split()
+        x, y = int(action[0]), int(action[1])
+
+        while self.board[x][y]:
+            action = input('\nХод: ').split()
+            x, y = int(action[0]), int(action[1])
+
+        self.available_actions.remove((x, y))
+
+        return self.step((x, y))
+
+    def render(self):
+        print()
+
+        d = {-1: 'O', 1: 'X', 0: ' '}
+
+        for row in self.board:
+            for i, col in enumerate(row):
+                print(f'{d[col]}', end='|')
+            print()
 

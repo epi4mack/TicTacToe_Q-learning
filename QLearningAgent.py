@@ -15,34 +15,53 @@ class QLearningAgent:
         return self.q_table[state]
 
     def choose_action(self, state, env):
+        def convert_indices(cell_number):
+            x = cell_number // 3
+            y = cell_number % 3
+            return (x, y)
+
         if random.uniform(0, 1) < self.epsilon:
             action = random.choice(list(env.available_actions))
             env.available_actions.remove(action)
             return action
-        
-        # Выбираем лучшее действие на основе Q-значений (эксплуатация)
-        q_values = self.get_q_values(state)
-        max_value = -float('inf')
-        best_actions = []
 
+        if state not in self.q_table:
+            self.q_table[state] = np.zeros(9)
+
+        max_value = (max(self.q_table[state]))
+
+        best_actions = []
         for action in env.available_actions:
             idx = action[0] * 3 + action[1]
-    
-            if q_values[idx] > max_value:
-                best_actions = [action]
-                max_value = q_values[idx]
-            elif q_values[idx] == max_value:
+            if self.q_table[state][idx] == max_value:
                 best_actions.append(action)
-        
-        final_choice = random.choice(best_actions) if best_actions else random.choice(env.available_actions)
+
+        final_choice = random.choice(best_actions)
         env.available_actions.remove(final_choice)
+
+        # Выбираем лучшее действие на основе Q-значений (эксплуатация)
+        # q_values = self.get_q_values(state)
+        # max_value = -float('inf')
+        # best_actions = []
+        #
+        # for action in env.available_actions:
+        #     idx = action[0] * 3 + action[1]
+        #
+        #     if q_values[idx] > max_value:
+        #         best_actions = [action]
+        #         max_value = q_values[idx]
+        #     elif q_values[idx] == max_value:
+        #         best_actions.append(action)
+        #
+        # final_choice = random.choice(best_actions) if best_actions else random.choice(env.available_actions)
+        # env.available_actions.remove(final_choice)
 
         return final_choice
 
     def update_values(self, state, action, reward):
-        # Обновляем ценности всех посещённых состояний
+        idx = action[0] * 3 + action[1]
+
         if state not in self.q_table:
             self.q_table[state] = np.zeros(9)
-        else:
-            idx = action[0] * 3 + action[1]
-            self.q_table[state][idx] = reward
+
+        self.q_table[state][idx] = reward

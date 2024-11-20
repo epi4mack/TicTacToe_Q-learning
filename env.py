@@ -23,6 +23,8 @@ class TicTacToeEnv:
             raise ValueError('Клетка занята!')
 
         self.board[i, j] = self.current_player
+        self.available_actions.remove((i, j))
+
         winner = self.check_winner()
         self.current_player *= -1
 
@@ -39,20 +41,29 @@ class TicTacToeEnv:
         return None
 
     def make_human_move(self):
-        action = input('\nХод: ').split()
-        x, y = int(action[0]), int(action[1])
-
-        while self.board[x][y]:
+        while True:
             action = input('\nХод: ').split()
-            x, y = int(action[0]), int(action[1])
 
-        self.available_actions.remove((x, y))
+            try:
+                x, y = action[0], action[1]
+            except:
+                continue
 
-        return self.step((x, y))
+            if not (x.isdigit() and y.isdigit()):
+                continue
+
+            x, y = int(x), int(y)
+            valid_range = set(range(3))
+            if not (x in valid_range and y in valid_range):
+                continue
+
+            if self.board[x][y]:
+                continue
+
+            return self.step((x, y))
+
 
     def render(self):
-        print()
-
         d = {-1: 'O', 1: 'X', 0: ' '}
 
         for row in self.board:

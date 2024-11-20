@@ -1,17 +1,29 @@
 from time import perf_counter
 from random import choice
-from os import system
+import matplotlib.pyplot as plt
 
 from env import TicTacToeEnv
 from QLearningAgent import QLearningAgent
 
+from utils import save_model, load_model
+
 def choose_random_action(env):
     action = choice(list(env.available_actions))
-    env.available_actions.remove(action)
     return action
 
-def train(agent, env, episodes=1000, alpha=0.4, gamma=0.9) -> None:
+def train(agent, env, episodes=1000, alpha=0.4, gamma=0.9, interval=8000) -> None:
+    x = []
+    y = []
+
+    cumulative_reward = 0
     for episode in range(episodes):
+
+        if episode % interval == 0:
+            x.append(episode)
+            avg_reward = cumulative_reward / interval
+            y.append(avg_reward)
+            cumulative_reward = 0
+
         state = env.reset()
 
         while True:
@@ -24,6 +36,7 @@ def train(agent, env, episodes=1000, alpha=0.4, gamma=0.9) -> None:
                 final_reward = 0.5 if not winner else 1
                 agent.update_values(state, action, final_reward, next_state, alpha, gamma)
                 state = next_state  # Переход к новому состоянию
+                cumulative_reward += final_reward
                 break
 
            # Игра продолжается, оппонент делает ход
@@ -34,170 +47,57 @@ def train(agent, env, episodes=1000, alpha=0.4, gamma=0.9) -> None:
                 final_reward = 0.5 if not winner else 0
                 agent.update_values(state, action, final_reward, next_state, alpha, gamma)
                 state = next_state  # Переход к новому состоянию
+                cumulative_reward += final_reward
                 break
 
             # Оппонент сделал ход но игра все ещё продолжается
             final_reward = 0.5
             agent.update_values(state, action, final_reward, next_state, alpha, gamma)
             state = next_state  # Переход к новому состоянию
+            cumulative_reward += final_reward
+
+    return x, y
 
 
-def display_sorted_q_table(q_table):
-    def state_to_table(state):
-        d = {0: '*', 1: 'X', -1: 'O'}
+def draw_graph(x: list[int], y: list[float]) -> None:
+    plt.plot(x, y, color='b', label='Зависимость награды от числа шагов')
+    plt.xlabel("Шаги")
+    plt.ylabel("Награда")
 
-        row1 = [d[v] for v in state[:3]]
-        row2 = [d[v] for v in state[3:6]]
-        row3 = [d[v] for v in state[6:9]]
+    plt.legend()
+    plt.grid(True)
 
-        result = f'\n\n{str(row1)}\n{str(row2)}\n{str(row3)}\n'
-
-        return result
-
-    f = open('table.txt', 'a')
-
-    print("Sorted Q-table:", file=f)
-    print("=" * 40, file=f)
-    
-    for state, q_values in q_table.items():
-        # Создаём список индексов и значений Q(s, a)
-        actions_and_values = [(index, value) for index, value in enumerate(q_values)]
-        # Сортируем по значению в порядке убывания
-        sorted_actions = sorted(actions_and_values, key=lambda x: x[1], reverse=True)
-        
-        print(f"State: {state_to_table(state)}", file=f)
-        print("Actions sorted by Q-values:", file=f)
-        for action_index, value in sorted_actions:
-            # Преобразуем индекс действия обратно в (row, col)
-            row, col = divmod(action_index, 3)
-            print(f"  Action: ({row}, {col}), Q-value: {value:.3f}", file=f)
-        print("-" * 40, file=f)
-
-    f.close()
-
-
-def play_with_human(env, agent, number=10000):
-    system('cls')
-
-    for _ in range(number):
-        state = env.reset()
-
-        while True:
-            # Ход крестиков (агент)
-            agent_move = agent.choose_action(state, env)
-            next_state, winner = env.step(agent_move)
-
-            env.render()
-
-            if winner == 0:
-                print('\nНичья')
-                break
-
-            if winner:
-                print('\nПобеда X')
-                break
-
-            # Ход человека
-            state = next_state
-            next_state, winner = env.make_human_move()
-
-            env.render()
-
-            if winner == 0:
-                print('\nНичья')
-                break
-
-            if winner:
-                print('\nПобеда O')
-                break
-
-            state = next_state
-
-
-    # Симуляция игр агента против случайного выьбора
-def test_agent(env, agent, number=10000):
-    wins = 0
-    ties = 0
-    loses = 0
-
-    for _ in range(number):
-        state = env.reset()
-
-        while True:
-
-            # Случайное действие крестиков
-            agent_move = agent.choose_action(state, env)
-            next_state, winner = env.step(agent_move)
-
-            # env.render()
-
-            if winner == 0:
-                # print('\nНичья')
-                ties += 1
-                break
-
-            if winner:
-                # print('\nПобеда X')
-                wins += 1
-                break
-
-            # Ход человека
-            state = next_state
-            rand = choose_random_action(env)
-            next_state, winner = env.step(rand)
-            # next_state, winner = env.make_human_move()
-
-            # env.render()
-
-            if winner == 0:
-                # print('\nНичья')
-                ties += 1
-                break
-
-            if winner:
-                # print('\nПобеда O')
-                loses += 1
-                break
-
-            state = next_state
-
-    win_percentage = (wins / number) * 100
-    lose_percentage = (loses / number) * 100
-    tie_percentage = (ties / number) * 100
-
-    print(f'\nПобед: {win_percentage:.2f}\nПоражений: {lose_percentage:.2f}\nНичьи: {tie_percentage:.2f}\n')
-
+    plt.show()
 
 
 if __name__ == "__main__":
 
     env = TicTacToeEnv()
-    epsilon = 0.05 # Вероятность выбора случайного действия
+    epsilon =  0.05 # Вероятность выбора случайного действия
 
-    alpha = 0.8
-    gamma = 0.5
+    alpha = 0.7
+    gamma = 0.1
 
     learning_agent = QLearningAgent(epsilon=epsilon)
 
     episodes = 100_000
     start_time = perf_counter()
 
-    train(
+    steps, rewards = (
+        train(
         agent=learning_agent,
         env=env,
         episodes=episodes,
         alpha=alpha,
-        gamma=gamma
-    )
+        gamma=gamma,
+        interval=episodes // 100
+    ))
 
     total_time = perf_counter() - start_time
     print(f'Training time: {total_time:.2f} s')
 
-    # display_sorted_q_table(learning_agent.q_table)
-    # print(len(learning_agent.q_table))
+    draw_graph(steps, rewards)
 
-    learning_agent.epsilon = 0 # При игре против человека агент не будет случайно выбирать ход
-
-    test_agent(env, learning_agent, number=50000)
-
-    play_with_human(env, learning_agent)
+    # Сохраняем обученную модель, потом загружаем её из файла
+    model_name = 'model_5M.pickle'
+    # save_model(learning_agent, model_name)

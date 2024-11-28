@@ -46,5 +46,6 @@ if __name__ == '__main__':
 
     model_name = 'model_5M.pickle'
     model = load_model(model_name)
-
+    model.epsilon = 0
+    
     play_with_human(env, model)

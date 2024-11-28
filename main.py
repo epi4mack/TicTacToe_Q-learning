@@ -80,7 +80,7 @@ if __name__ == "__main__":
 
     learning_agent = QLearningAgent(epsilon=epsilon)
 
-    episodes = 100_000
+    episodes = 20_000
     start_time = perf_counter()
 
     steps, rewards = (

@@ -35,8 +35,6 @@ def test_model(env, agent, number=10000):
             rand = choose_random_action(env)
             next_state, winner = env.step(rand)
 
-            # env.render()
-
             if winner == 0:
                 ties += 1
                 break

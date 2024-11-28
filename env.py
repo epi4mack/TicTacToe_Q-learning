@@ -52,7 +52,7 @@ class TicTacToeEnv:
             if not (x.isdigit() and y.isdigit()):
                 continue
 
-            x, y = int(x), int(y)
+            x, y = int(x) - 1, int(y) - 1
             valid_range = set(range(3))
             if not (x in valid_range and y in valid_range):
                 continue
